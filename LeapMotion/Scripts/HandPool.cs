@@ -247,10 +247,11 @@ namespace Leap.Unity {
       for (int i = 0; i < ModelPool.Count; i++) {
         if (ModelPool[i] != null) {
           if (ModelPool[i].LeftModel) {
-            ModelPool[i].IsLeftToBeSpawned = PrefabUtility.GetPrefabType(ModelPool[i].LeftModel) == PrefabType.Prefab;
+            // temporary fix for a bug that is causing this line to be true if we spawn a prefab already containing hand models
+            ModelPool[i].IsLeftToBeSpawned = false;  // PrefabUtility.GetPrefabType(ModelPool[i].LeftModel) == PrefabType.Prefab;
           }
           if (ModelPool[i].RightModel) {
-            ModelPool[i].IsRightToBeSpawned = PrefabUtility.GetPrefabType(ModelPool[i].RightModel) == PrefabType.Prefab;
+            ModelPool[i].IsRightToBeSpawned = false; // PrefabUtility.GetPrefabType(ModelPool[i].RightModel) == PrefabType.Prefab;
           }
         }
       }
