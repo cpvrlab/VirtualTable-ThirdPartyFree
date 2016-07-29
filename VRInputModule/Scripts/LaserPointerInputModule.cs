@@ -2,15 +2,18 @@
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
 
-namespace Wacki {
+namespace Wacki
+{
 
-    public class LaserPointerInputModule : BaseInputModule {
+    public class LaserPointerInputModule : BaseInputModule
+    {
 
         public static LaserPointerInputModule instance { get { return _instance; } }
         private static LaserPointerInputModule _instance = null;
-                
+
         // storage class for controller specific data
-        private class ControllerData {
+        private class ControllerData
+        {
             public PointerEventData pointerEvent;
             public GameObject currentPoint;
             public GameObject currentPressed;
@@ -26,7 +29,8 @@ namespace Wacki {
         {
             base.Awake();
 
-            if(_instance != null) {
+            if (_instance != null)
+            {
                 Debug.LogWarning("Trying to instantiate multiple LaserPointerInputModule.");
                 DestroyImmediate(this.gameObject);
             }
@@ -37,7 +41,7 @@ namespace Wacki {
         protected override void Start()
         {
             base.Start();
-            
+
             // Create a new camera that will be used for raycasts
             UICamera = new GameObject("UI Camera").AddComponent<Camera>();
             UICamera.clearFlags = CameraClearFlags.Nothing;
@@ -47,8 +51,9 @@ namespace Wacki {
 
             // Find canvases in the scene and assign our custom
             // UICamera to them
-            Canvas[] canvases = Resources.FindObjectsOfTypeAll<Canvas>();            
-            foreach(Canvas canvas in canvases) {
+            Canvas[] canvases = Resources.FindObjectsOfTypeAll<Canvas>();
+            foreach (Canvas canvas in canvases)
+            {
                 canvas.worldCamera = UICamera;
             }
         }
@@ -72,7 +77,8 @@ namespace Wacki {
         // clear the current selection
         public void ClearSelection()
         {
-            if(base.eventSystem.currentSelectedGameObject) {
+            if (base.eventSystem.currentSelectedGameObject)
+            {
                 base.eventSystem.SetSelectedGameObject(null);
             }
         }
@@ -82,28 +88,30 @@ namespace Wacki {
         {
             ClearSelection();
 
-            if(ExecuteEvents.GetEventHandler<ISelectHandler>(go)) {
+            if (ExecuteEvents.GetEventHandler<ISelectHandler>(go))
+            {
                 base.eventSystem.SetSelectedGameObject(go);
             }
         }
 
         public override void Process()
         {
-            foreach(var pair in _controllerData) {
+            foreach (var pair in _controllerData)
+            {
                 IUILaserPointer controller = pair.Key;
                 ControllerData data = pair.Value;
 
                 // Test if UICamera is looking at a GUI element
                 UpdateCameraPosition(controller);
 
-                if(data.pointerEvent == null)
+                if (data.pointerEvent == null)
                     data.pointerEvent = new PointerEventData(eventSystem);
                 else
                     data.pointerEvent.Reset();
 
                 data.pointerEvent.delta = Vector2.zero;
-                data.pointerEvent.position = new Vector2(Screen.width * 0.5f, Screen.height * 0.5f);
-                data.pointerEvent.scrollDelta = Vector2.zero;
+                data.pointerEvent.position = new Vector2(UICamera.pixelWidth * 0.5f, UICamera.pixelHeight * 0.5f);
+                //data.pointerEvent.scrollDelta = Vector2.zero;
 
                 // trigger a raycast
                 eventSystem.RaycastAll(data.pointerEvent, m_RaycastResultCache);
@@ -112,7 +120,7 @@ namespace Wacki {
 
                 // make sure our controller knows about the raycast result
                 // we add 0.01 because that is the near plane distance of our camera and we want the correct distance
-                if(data.pointerEvent.pointerCurrentRaycast.distance > 0.0f)
+                if (data.pointerEvent.pointerCurrentRaycast.distance > 0.0f)
                     controller.LimitLaserDistance(data.pointerEvent.pointerCurrentRaycast.distance + 0.01f);
 
                 // stop if no UI element was hit
@@ -121,11 +129,12 @@ namespace Wacki {
 
                 // Send control enter and exit events to our controller
                 var hitControl = data.pointerEvent.pointerCurrentRaycast.gameObject;
-                if(data.currentPoint != hitControl) {
-                    if(data.currentPoint != null)
+                if (data.currentPoint != hitControl)
+                {
+                    if (data.currentPoint != null)
                         controller.OnExitControl(data.currentPoint);
 
-                    if(hitControl != null)
+                    if (hitControl != null)
                         controller.OnEnterControl(hitControl);
                 }
 
@@ -134,7 +143,8 @@ namespace Wacki {
                 // Handle enter and exit events on the GUI controlls that are hit
                 base.HandlePointerExitAndEnter(data.pointerEvent, data.currentPoint);
 
-                if(controller.ButtonDown()) {
+                if (controller.ButtonDown())
+                {
                     ClearSelection();
 
                     data.pointerEvent.pressPosition = data.pointerEvent.position;
@@ -142,18 +152,22 @@ namespace Wacki {
                     data.pointerEvent.pointerPress = null;
 
                     // update current pressed if the curser is over an element
-                    if(data.currentPoint != null) {
+                    if (data.currentPoint != null)
+                    {
                         data.currentPressed = data.currentPoint;
 
                         GameObject newPressed = ExecuteEvents.ExecuteHierarchy(data.currentPressed, data.pointerEvent, ExecuteEvents.pointerDownHandler);
-                        if(newPressed == null) {
+                        if (newPressed == null)
+                        {
                             // some UI elements might only have click handler and not pointer down handler
                             newPressed = ExecuteEvents.ExecuteHierarchy(data.currentPressed, data.pointerEvent, ExecuteEvents.pointerClickHandler);
-                            if(newPressed != null) {
+                            if (newPressed != null)
+                            {
                                 data.currentPressed = newPressed;
                             }
                         }
-                        else {
+                        else
+                        {
                             data.currentPressed = newPressed;
                             // we want to do click on button down at same time, unlike regular mouse processing
                             // which does click when mouse goes up over same object it went down on
@@ -161,7 +175,8 @@ namespace Wacki {
                             ExecuteEvents.Execute(newPressed, data.pointerEvent, ExecuteEvents.pointerClickHandler);
                         }
 
-                        if(newPressed != null) {
+                        if (newPressed != null)
+                        {
                             data.pointerEvent.pointerPress = newPressed;
                             data.currentPressed = newPressed;
                             Select(data.currentPressed);
@@ -174,16 +189,20 @@ namespace Wacki {
                 }// button down end
 
 
-                if(controller.ButtonUp()) {
-                    if(data.currentDragging != null) {
+                if (controller.ButtonUp())
+                {
+                    if (data.currentDragging != null)
+                    {
                         ExecuteEvents.Execute(data.currentDragging, data.pointerEvent, ExecuteEvents.endDragHandler);
-                        if(data.currentPoint != null) {
+                        if (data.currentPoint != null)
+                        {
                             ExecuteEvents.ExecuteHierarchy(data.currentPoint, data.pointerEvent, ExecuteEvents.dropHandler);
                         }
                         data.pointerEvent.pointerDrag = null;
                         data.currentDragging = null;
                     }
-                    if(data.currentPressed) {
+                    if (data.currentPressed)
+                    {
                         ExecuteEvents.Execute(data.currentPressed, data.pointerEvent, ExecuteEvents.pointerUpHandler);
                         data.pointerEvent.rawPointerPress = null;
                         data.pointerEvent.pointerPress = null;
@@ -193,7 +212,8 @@ namespace Wacki {
 
 
                 // drag handling
-                if(data.currentDragging != null) {
+                if (data.currentDragging != null)
+                {
                     ExecuteEvents.Execute(data.currentDragging, data.pointerEvent, ExecuteEvents.dragHandler);
                 }
             }
