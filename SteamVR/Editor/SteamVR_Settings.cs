@@ -101,37 +101,39 @@ public class SteamVR_Settings : EditorWindow
 		// Switch to native OpenVR support.
 		var updated = false;
 
-		if (!PlayerSettings.virtualRealitySupported)
-		{
-			PlayerSettings.virtualRealitySupported = true;
-			updated = true;
-		}
+        // I don't want steamVR deciding if my project should turn on Virtual Reality Supported
+        // or not.
+        //if (!PlayerSettings.virtualRealitySupported)
+        //{
+        //    PlayerSettings.virtualRealitySupported = true;
+        //    updated = true;
+        //}
 
-		var devices = UnityEditorInternal.VR.VREditor.GetVREnabledDevices(BuildTargetGroup.Standalone);
+        var devices = UnityEditorInternal.VR.VREditor.GetVREnabledDevices(BuildTargetGroup.Standalone);
 		var hasOpenVR = false;
 		foreach (var device in devices)
 			if (device.ToLower() == "openvr")
 				hasOpenVR = true;
+ 
+        if (!hasOpenVR)
+        {
+            string[] newDevices;
+            if (updated)
+            {
+                newDevices = new string[] { "OpenVR" };
+            }
+            else
+            {
+                newDevices = new string[devices.Length + 1];
+                for (int i = 0; i < devices.Length; i++)
+                    newDevices[i] = devices[i];
+                newDevices[devices.Length] = "OpenVR";
+                updated = true;
+            }
+            UnityEditorInternal.VR.VREditor.SetVREnabledDevices(BuildTargetGroup.Standalone, newDevices);
+        }
 
-		if (!hasOpenVR)
-		{
-			string[] newDevices;
-			if (updated)
-			{
-				newDevices = new string[] { "OpenVR" };
-			}
-			else
-			{
-				newDevices = new string[devices.Length + 1];
-				for (int i = 0; i < devices.Length; i++)
-					newDevices[i] = devices[i];
-				newDevices[devices.Length] = "OpenVR";
-				updated = true;
-			}
-			UnityEditorInternal.VR.VREditor.SetVREnabledDevices(BuildTargetGroup.Standalone, newDevices);
-		}
-
-		if (updated)
+        if (updated)
 			Debug.Log("Switching to native OpenVR support.");
 
 		var dlls = new string[]
