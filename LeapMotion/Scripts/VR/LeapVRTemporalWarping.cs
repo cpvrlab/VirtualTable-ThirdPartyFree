@@ -343,7 +343,7 @@ namespace Leap.Unity {
     }
 
     private void updateTemporalWarping(Vector3 currLocalPosition, Quaternion currLocalRotation) {
-      if (_trackingAnchor == null || provider.GetLeapController() == null) {
+      if (_trackingAnchor == null || provider.GetLeapController() == null || provider.CurrentFrame == null) {
         return;
       }
 
